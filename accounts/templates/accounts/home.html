@@ -1,0 +1,386 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard | Vhojon Bilash POS</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { primary: "#0f172a", accent: "#f97316" }
+        }
+      }
+    }
+  </script>
+</head>
+
+<body class="bg-slate-100 min-h-screen">
+  <div class="flex min-h-screen">
+
+    <!-- Sidebar -->
+    {% include "sidebar.html" %}
+
+    <!-- Main -->
+    <div class="flex-1 flex flex-col">
+
+      <!-- Topbar -->
+      <nav class="bg-white shadow-sm px-6 py-4 flex items-center justify-between">
+        <div>
+          <h1 class="text-lg font-semibold text-slate-800">Dashboard</h1>
+          <p class="text-sm text-slate-500">Overview of sales, expenses, and profit</p>
+
+          <!-- ✅ Digital Clock (SERVER time) -->
+          <!-- ✅ Enhanced Server Digital Clock -->
+<!-- 🌟 Premium Server Clock -->
+<div class="mt-4 inline-flex items-center gap-4 rounded-3xl
+            bg-white/70 backdrop-blur-xl
+            px-6 py-3 shadow-lg shadow-slate-200/50">
+
+  <!-- Icon -->
+  <div class="flex h-10 w-10 items-center justify-center rounded-2xl
+              bg-gradient-to-br from-orange-400 to-pink-500 text-white shadow-md">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+         viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2" />
+      <path stroke-linecap="round" stroke-linejoin="round"
+            d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  </div>
+
+  <!-- Info -->
+  <div class="flex flex-col leading-tight">
+    <span class="text-[11px] uppercase tracking-widest text-slate-400">
+      Server Time
+    </span>
+
+    <div class="flex items-center gap-3 mt-1">
+
+      <!-- Date -->
+      <span id="clock-date"
+        class="rounded-xl bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600">
+        {{ server_now|date:"d M Y" }}
+      </span>
+
+      <!-- Time -->
+      <span id="clock-time"
+        class="rounded-xl px-4 py-1.5
+               bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500
+               text-white font-semibold text-[15px] tracking-wide
+               shadow-md shadow-purple-500/30">
+        {{ server_now|date:"h:i:s A" }}
+      </span>
+
+    </div>
+  </div>
+</div>
+
+
+        </div>
+
+        <div class="flex items-center gap-4">
+          <div class="text-sm text-slate-600">
+            Logged in as <span class="font-medium">{{ request.user.username }}</span>
+          </div>
+          <a href="{% url 'logout' %}"
+             class="text-sm font-semibold text-orange-600 hover:text-orange-700">
+            Logout
+          </a>
+        </div>
+      </nav>
+
+      <!-- Content -->
+      <main class="p-6 flex-1 space-y-6">
+
+        <!-- Quick Stats -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+          <!-- Today Sales -->
+          <div class="bg-white rounded-2xl shadow p-5 border border-slate-100">
+            <div class="flex items-start justify-between">
+              <div>
+                <p class="text-sm text-slate-500">Today Sales</p>
+                <h2 class="text-2xl font-semibold mt-1">৳ {{ today_sales|default:"0" }}</h2>
+                <p class="text-xs text-slate-400 mt-2">Total paid sales today</p>
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-50 text-orange-700 border border-orange-100">
+                Sales
+              </span>
+            </div>
+          </div>
+
+          <!-- Today Expenses -->
+          <div class="bg-white rounded-2xl shadow p-5 border border-slate-100">
+            <div class="flex items-start justify-between">
+              <div>
+                <p class="text-sm text-slate-500">Today Expenses</p>
+                <h2 class="text-2xl font-semibold mt-1">৳ {{ today_expense|default:"0" }}</h2>
+                <p class="text-xs text-slate-400 mt-2">Total expense today</p>
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200">
+                Expense
+              </span>
+            </div>
+          </div>
+
+          <!-- Today Profit -->
+          <div class="bg-white rounded-2xl shadow p-5 border border-slate-100">
+            <div class="flex items-start justify-between">
+              <div>
+                <p class="text-sm text-slate-500">Today Profit</p>
+                <h2 class="text-2xl font-semibold mt-1">৳ {{ today_profit|default:"0" }}</h2>
+                <p class="text-xs text-slate-400 mt-2">Sales - expenses</p>
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                Profit
+              </span>
+            </div>
+          </div>
+
+          <!-- Orders Today -->
+          <div class="bg-white rounded-2xl shadow p-5 border border-slate-100">
+            <div class="flex items-start justify-between">
+              <div>
+                <p class="text-sm text-slate-500">Orders Today</p>
+                <h2 class="text-2xl font-semibold mt-1">{{ today_orders|default:"0" }}</h2>
+                <p class="text-xs text-slate-400 mt-2">POS + Website</p>
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                Orders
+              </span>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- Second Row Summary -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          <!-- Monthly Summary -->
+          <div class="bg-white rounded-2xl shadow p-6 lg:col-span-2 border border-slate-100">
+            <div class="flex items-center justify-between">
+              <h3 class="text-base font-semibold text-slate-800">This Month Summary</h3>
+              <span class="text-xs text-slate-500">Auto calculated</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+              <div class="rounded-xl bg-slate-50 p-4 border border-slate-200">
+                <p class="text-sm text-slate-500">Monthly Sales</p>
+                <p class="text-xl font-semibold mt-1">৳ {{ month_sales|default:"0" }}</p>
+              </div>
+              <div class="rounded-xl bg-slate-50 p-4 border border-slate-200">
+                <p class="text-sm text-slate-500">Monthly Expenses</p>
+                <p class="text-xl font-semibold mt-1">৳ {{ month_expense|default:"0" }}</p>
+              </div>
+              <div class="rounded-xl bg-slate-50 p-4 border border-slate-200">
+                <p class="text-sm text-slate-500">Monthly Profit</p>
+                <p class="text-xl font-semibold mt-1">৳ {{ month_profit|default:"0" }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="bg-white rounded-2xl shadow p-6 border border-slate-100">
+            <h3 class="text-base font-semibold text-slate-800">Quick Actions</h3>
+
+            <div class="mt-4 space-y-3">
+              <a href="{% url 'orders:create_pos_order' %}"
+                 class="block w-full text-center rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 transition">
+                + New POS Order
+              </a>
+
+              <a href="#"
+                 class="block w-full text-center rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 transition">
+                + Website Order (Manual)
+              </a>
+
+              <a href="#"
+                 class="block w-full text-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 font-semibold py-3 transition">
+                + Add Expense
+              </a>
+            </div>
+
+            <p class="text-xs text-slate-400 mt-4">
+              Tip: You can quickly create orders/expenses from here.
+            </p>
+          </div>
+
+        </section>
+
+        <!-- Tables -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          <!-- Recent Orders -->
+          <div class="bg-white rounded-2xl shadow p-6 border border-slate-100">
+            <div class="flex items-center justify-between">
+              <h3 class="text-base font-semibold text-slate-800">Recent Orders</h3>
+
+              <a href="{% url 'orders:order_list' %}"
+                 class="text-sm font-semibold text-orange-600 hover:text-orange-700">
+                View all
+              </a>
+            </div>
+
+            <div class="mt-4 overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="text-slate-500">
+                  <tr class="border-b">
+                    <th class="text-left py-2">Order ID</th>
+                    <th class="text-left py-2">Source</th>
+                    <th class="text-left py-2">Total</th>
+                    <th class="text-left py-2">Status</th>
+                    <th class="text-left py-2">Date</th>
+                    <th class="text-right py-2">Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody class="text-slate-700">
+                  {% for o in recent_orders|slice:":5" %}
+                    <tr class="border-b last:border-b-0 hover:bg-slate-50">
+                      <td class="py-2 font-medium">
+                        {% if o.order_no %}
+                          {{ o.order_no }}
+                        {% else %}
+                          #{{ o.id }}
+                        {% endif %}
+                      </td>
+
+                      <td class="py-2">{{ o.source|default:"-" }}</td>
+
+                      <td class="py-2 font-semibold">
+                        ৳ {{ o.grand_total|default:"0.000" }}
+                      </td>
+
+                      <td class="py-2">
+                        <span class="px-2 py-1 rounded-full text-xs font-semibold
+                          {% if o.status == 'COMPLETED' %}
+                            bg-emerald-100 text-emerald-700
+                          {% elif o.status == 'PENDING' %}
+                            bg-amber-100 text-amber-700
+                          {% elif o.status == 'CANCELLED' %}
+                            bg-rose-100 text-rose-700
+                          {% else %}
+                            bg-slate-100 text-slate-700
+                          {% endif %}
+                        ">
+                          {{ o.status|default:"-" }}
+                        </span>
+                      </td>
+
+                      <td class="py-2 text-slate-500">
+                        {{ o.created_at|date:"d M, Y h:i A" }}
+                      </td>
+
+                      <td class="py-2">
+                        <div class="flex justify-end gap-2">
+                          <a href="{% url 'orders:order_detail' o.pk %}"
+                             class="px-3 py-1.5 rounded-lg bg-white border hover:bg-slate-50">
+                            View
+                          </a>
+
+                          <a href="{% url 'orders:order_update' o.pk %}"
+                             class="px-3 py-1.5 rounded-lg bg-amber-500 text-white hover:bg-amber-600">
+                            Edit
+                          </a>
+
+                          <a href="{% url 'orders:order_delete' o.pk %}"
+                             class="px-3 py-1.5 rounded-lg bg-rose-600 text-white hover:bg-rose-700">
+                            Delete
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td class="py-4 text-slate-400 text-center" colspan="6">
+                        No recent orders.
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Recent Expenses -->
+          <div class="bg-white rounded-2xl shadow p-6 border border-slate-100">
+            <div class="flex items-center justify-between">
+              <h3 class="text-base font-semibold text-slate-800">Recent Expenses</h3>
+              <a href="#"
+                 class="text-sm font-semibold text-orange-600 hover:text-orange-700">
+                View all
+              </a>
+            </div>
+
+            <div class="mt-4 overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="text-slate-500">
+                  <tr class="border-b">
+                    <th class="text-left py-2">Date</th>
+                    <th class="text-left py-2">Category</th>
+                    <th class="text-left py-2">Amount</th>
+                  </tr>
+                </thead>
+
+                <tbody class="text-slate-700">
+                  {% for e in recent_expenses %}
+                    <tr class="border-b last:border-b-0 hover:bg-slate-50">
+                      <td class="py-2 text-slate-500">
+                        {% if e.date %}{{ e.date|date:"d M, Y" }}{% else %}-{% endif %}
+                      </td>
+                      <td class="py-2">
+                        {% if e.category %}{{ e.category }}{% else %}-{% endif %}
+                      </td>
+                      <td class="py-2 font-semibold">
+                        ৳ {{ e.amount|default:"0" }}
+                      </td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td class="py-4 text-slate-400" colspan="3">No recent expenses.</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ✅ Digital clock updater (SERVER time every 1 second) -->
+  <!-- ✅ Digital clock updater (SERVER time every 1 second) -->
+<script>
+  (function () {
+    const dateEl = document.getElementById("clock-date");
+    const timeEl = document.getElementById("clock-time");
+
+    async function tick() {
+      try {
+        const res = await fetch("{% url 'server_clock' %}", {
+          headers: { "X-Requested-With": "XMLHttpRequest" }
+        });
+        if (!res.ok) return;
+
+        const data = await res.json();
+        if (dateEl && data.date) dateEl.textContent = data.date;
+        if (timeEl && data.time) timeEl.textContent = data.time;
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    tick();
+    setInterval(tick, 1000);
+  })();
+</script>
+
+</body>
+</html>
