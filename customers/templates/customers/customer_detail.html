@@ -61,6 +61,53 @@
     </div>
   </div>
 
+  {# ✅ NEW FEATURE: DUE ORDERS SECTION #}
+  {% if due_orders %}
+    <div class="bg-white rounded-2xl shadow border border-rose-200 p-5 mb-6">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-lg font-semibold text-rose-700">Due Orders</h2>
+        <span class="text-xs px-2 py-1 rounded-full bg-rose-100 text-rose-700">
+          {{ due_orders|length }} due
+        </span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead class="bg-rose-50 text-rose-700 border-b">
+            <tr class="text-left">
+              <th class="py-3 px-4">Order No</th>
+              <th class="py-3 px-4">Status</th>
+              <th class="py-3 px-4">Total</th>
+              <th class="py-3 px-4">Due</th>
+              <th class="py-3 px-4 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for o in due_orders %}
+              <tr class="border-b last:border-b-0">
+                <td class="py-3 px-4 font-semibold">{{ o.order_no }}</td>
+                <td class="py-3 px-4">{{ o.status }}</td>
+                <td class="py-3 px-4">{{ o.grand_total }}</td>
+                <td class="py-3 px-4 text-rose-600 font-semibold">{{ o.due_total }}</td>
+                <td class="py-3 px-4 text-right">
+                  <a href="{% url 'orders:order_detail' o.pk %}"
+                     class="px-3 py-1.5 rounded-lg bg-rose-600 text-white hover:bg-rose-700">
+                    Collect / View
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <p class="text-xs text-slate-500 mt-3">
+        Click <span class="font-semibold">Collect / View</span> to open the order details and collect payment.
+      </p>
+    </div>
+  {% endif %}
+
+  {# ✅ Recent Orders (highlight due rows + change button text) #}
   {% if recent_orders %}
     <div class="bg-white rounded-2xl shadow border border-slate-200 p-5">
       <h2 class="text-lg font-semibold mb-3">Recent Orders</h2>
@@ -78,7 +125,7 @@
           </thead>
           <tbody>
             {% for o in recent_orders %}
-              <tr class="border-b last:border-b-0">
+              <tr class="border-b last:border-b-0 {% if o.due_total > 0 %}bg-rose-50{% endif %}">
                 <td class="py-3 px-4 font-semibold">{{ o.order_no }}</td>
                 <td class="py-3 px-4">{{ o.status }}</td>
                 <td class="py-3 px-4">{{ o.grand_total }}</td>
@@ -87,8 +134,13 @@
                 </td>
                 <td class="py-3 px-4 text-right">
                   <a href="{% url 'orders:order_detail' o.pk %}"
-                     class="px-3 py-1.5 rounded-lg bg-white border hover:bg-slate-50">
-                    View
+                     class="px-3 py-1.5 rounded-lg border hover:bg-slate-50
+                            {% if o.due_total > 0 %}
+                              bg-rose-600 text-white border-rose-600 hover:bg-rose-700
+                            {% else %}
+                              bg-white
+                            {% endif %}">
+                    {% if o.due_total > 0 %}Collect{% else %}View{% endif %}
                   </a>
                 </td>
               </tr>

@@ -125,18 +125,28 @@ def customer_detail(request, pk):
     customer = get_object_or_404(Customer, pk=pk)
     addresses = customer.addresses.all().order_by("-is_primary", "-created_at")
 
-    # Optional: show last 10 orders (if orders app exists)
     recent_orders = []
+    due_orders = []
+
     try:
         from orders.models import Order
+
         recent_orders = Order.objects.filter(customer=customer).order_by("-id")[:10]
+        due_orders = (
+            Order.objects
+            .filter(customer=customer, due_total__gt=0)
+            .exclude(status__iexact="cancelled")   # optional if you use cancelled
+            .order_by("-id")[:20]
+        )
     except Exception:
         recent_orders = []
+        due_orders = []
 
     return render(request, "customers/customer_detail.html", {
         "customer": customer,
         "addresses": addresses,
         "recent_orders": recent_orders,
+        "due_orders": due_orders,
     })
 
 
