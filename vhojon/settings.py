@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'expenses',        # expenses & expense categories
     'settings_app',    # system settings (restaurant, tax, receipt)
     'reports',         # reports (queries/views only)
+    "staff",
 ]
 
 

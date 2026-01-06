@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-6xl mx-auto p-6">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-semibold">Expenses Dashboard</h1>
+
+    <form method="get" class="flex items-center gap-2">
+      <input type="date" name="month" value="{{ month|date:'Y-m-d' }}"
+             class="px-3 py-2 rounded-xl border border-slate-200 bg-white" />
+      <button class="px-4 py-2 rounded-xl bg-orange-600 text-white font-semibold">Filter</button>
+      <a href="{% url 'expenses:dashboard' %}"
+         class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold">Reset</a>
+    </form>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow">
+      <p class="text-slate-500 text-sm">Utility Bills</p>
+      <p class="text-2xl font-bold mt-2">{{ utility_total }}</p>
+      <a class="text-sm text-orange-600 font-semibold mt-3 inline-block"
+         href="{% url 'expenses:utility_list' %}">View</a>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow">
+      <p class="text-slate-500 text-sm">Raw Material</p>
+      <p class="text-2xl font-bold mt-2">{{ raw_total }}</p>
+      <a class="text-sm text-orange-600 font-semibold mt-3 inline-block"
+         href="{% url 'expenses:raw_list' %}">View</a>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow">
+      <p class="text-slate-500 text-sm">Staff Salary</p>
+      <p class="text-2xl font-bold mt-2">{{ salary_total }}</p>
+      <a class="text-sm text-orange-600 font-semibold mt-3 inline-block"
+         href="{% url 'expenses:salary_list' %}">View</a>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow">
+      <p class="text-slate-500 text-sm">Others</p>
+      <p class="text-2xl font-bold mt-2">{{ other_total }}</p>
+      <a class="text-sm text-orange-600 font-semibold mt-3 inline-block"
+         href="{% url 'expenses:other_list' %}">View</a>
+    </div>
+  </div>
+
+  <div class="mt-6 bg-white rounded-2xl border border-slate-100 p-6 shadow">
+    <div class="flex items-center justify-between">
+      <h2 class="text-lg font-semibold">Total Expense</h2>
+      <p class="text-2xl font-bold text-rose-600">{{ grand_total }}</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
