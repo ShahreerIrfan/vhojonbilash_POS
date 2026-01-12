@@ -140,3 +140,17 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+POS_PRINTER_ENABLED = False
+
+
+# settings.py
+POS_PRINTER = {
+    "TYPE": "LAN",          # "LAN" or "USB"
+    "HOST": "192.168.1.50", # LAN printer IP
+    "PORT": 9100,
+
+    # USB only (example placeholders)
+    "USB_VENDOR_ID": 0x0000,
+    "USB_PRODUCT_ID": 0x0000,
+}

@@ -58,13 +58,16 @@ class RawMaterialPurchase(models.Model):
 
 class StaffSalaryPayment(models.Model):
     staff = models.ForeignKey(Staff, on_delete=models.PROTECT, related_name="salary_payments")
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     pay_date = models.DateField(default=timezone.now)
     month = models.DateField(help_text="Use first day of the month (e.g. 2026-01-01).")
     note = models.CharField(max_length=255, blank=True)
 
-    def __str__(self):
-        return f"{self.staff.name} - {self.amount}"
+    def save(self, *args, **kwargs):
+        if self.amount in (None, ""):
+            self.amount = self.staff.monthly_salary
+        super().save(*args, **kwargs)
+
 
 
 class OtherExpense(models.Model):

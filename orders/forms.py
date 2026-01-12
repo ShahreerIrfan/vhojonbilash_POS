@@ -103,10 +103,15 @@ class OrderForm(forms.ModelForm):
 
 
 # =====================================================
-# ORDER ITEM FORM (UPDATED: per-item discount)
+# ORDER ITEM FORM (✅ updated product widget for AJAX search)
 # =====================================================
 class OrderItemForm(forms.ModelForm):
-    product = forms.ModelChoiceField(queryset=Product.objects.filter(is_active=True))
+    product = forms.ModelChoiceField(
+        queryset=Product.objects.filter(is_active=True),
+        widget=forms.Select(attrs={
+            "class": "js-product-search",  # ✅ used by JS to enable search dropdown
+        })
+    )
 
     # unit_price optional (auto-fill)
     unit_price = forms.DecimalField(required=False)
@@ -157,7 +162,7 @@ OrderItemFormSet = inlineformset_factory(
     OrderItem,
     form=OrderItemForm,
     extra=1,
-    can_delete=True,  # keep (we hide checkbox, use Remove button)
+    can_delete=True,
 )
 
 

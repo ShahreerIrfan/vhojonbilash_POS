@@ -1,22 +1,68 @@
 # orders/views.py
+from decimal import Decimal
+
 from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+
 from customers.models import CustomerAddress
+from catalog.models import Product
+
 from .forms import CustomerCreateOrSelectForm, OrderForm, OrderItemFormSet, PaymentFormSet
 from .models import Order
 from .utils import generate_order_no
-from django.core.paginator import Paginator
+
+# ✅ NEW: printer helpers
+from .pos_printer import print_chef_kot, print_customer_receipt
 
 
 def is_ajax(request):
     return request.headers.get("x-requested-with") == "XMLHttpRequest"
 
 
+# =====================================================
+# ✅ PRODUCT SEARCH (AJAX)
+# =====================================================
+@login_required
+def product_search(request):
+    q = (request.GET.get("q") or "").strip()
+    page = int(request.GET.get("page") or 1)
+    page_size = 10
+
+    qs = Product.objects.filter(is_active=True).order_by("name")
+
+    if q:
+        qs = qs.filter(Q(name__icontains=q) | Q(sku__icontains=q))
+
+    start = (page - 1) * page_size
+    end = start + page_size
+
+    results = []
+    for p in qs[start:end]:
+        label = p.name
+        if getattr(p, "sku", None):
+            label = f"{p.name} ({p.sku})"
+
+        results.append({
+            "id": p.id,
+            "text": label,
+            "price": str(p.sale_price),
+        })
+
+    return JsonResponse({
+        "results": results,
+        "pagination": {"more": qs.count() > end},
+    })
+
+
+# =====================================================
+# CREATE ORDER
+# =====================================================
+@login_required
 @transaction.atomic
 def order_create(request):
     if request.method == "POST":
@@ -34,7 +80,6 @@ def order_create(request):
             order.order_no = generate_order_no()
             order.customer = customer
 
-            # attach primary address if customer exists
             if customer:
                 addr = (
                     CustomerAddress.objects.filter(customer=customer)
@@ -56,14 +101,13 @@ def order_create(request):
             pay_formset.instance = order
             pay_formset.save()
 
-            # totals include item discounts (OrderItem.save calculates line_total)
             order.recalc_totals()
 
+            # ✅ CHANGE: redirect to print options page
             if is_ajax(request):
-                # ✅ helpful for frontend redirect after AJAX
                 return JsonResponse({
                     "ok": True,
-                    "redirect_url": redirect("orders:order_detail", pk=order.pk).url,
+                    "redirect_url": redirect("orders:order_print_options", pk=order.pk).url,
                     "order_id": order.id,
                     "order_no": order.order_no,
                     "payment_status": order.payment_status,
@@ -75,7 +119,7 @@ def order_create(request):
                 })
 
             messages.success(request, f"Order created: {order.order_no} | Due: {order.due_total}")
-            return redirect("orders:order_detail", pk=order.pk)
+            return redirect("orders:order_print_options", pk=order.pk)
 
         # invalid
         if is_ajax(request):
@@ -107,38 +151,56 @@ def order_create(request):
     })
 
 
+# =====================================================
+# ✅ NEW: PRINT OPTIONS PAGE
+# =====================================================
+@login_required
+def order_print_options(request, pk):
+    order = get_object_or_404(
+        Order.objects.select_related("customer", "customer_address"),
+        pk=pk
+    )
+    return render(request, "orders/order_print_options.html", {"order": order})
+
+
+# =====================================================
+# ✅ NEW: PRINT CHEF KOT
+# =====================================================
+@login_required
+def order_print_chef(request, pk):
+    order = get_object_or_404(Order, pk=pk)
+    try:
+        print_chef_kot(order)
+        return JsonResponse({"ok": True})
+    except Exception as e:
+        return JsonResponse({"ok": False, "error": str(e)}, status=500)
+
+
+# =====================================================
+# ✅ NEW: PRINT CUSTOMER RECEIPT
+# =====================================================
+@login_required
+def order_print_customer(request, pk):
+    order = get_object_or_404(Order, pk=pk)
+    try:
+        print_customer_receipt(order)
+        return JsonResponse({"ok": True})
+    except Exception as e:
+        return JsonResponse({"ok": False, "error": str(e)}, status=500)
+
+
+# =====================================================
+# ORDER DETAIL
+# =====================================================
 @login_required
 def order_detail(request, pk):
-    """
-    Order Details Page
-    Shows: customer, address, items, payments, totals
-    """
     order = get_object_or_404(
         Order.objects.select_related("customer", "customer_address"),
         pk=pk
     )
 
-    # ✅ Robust related access (works even if your related_name differs)
-    # Try common related names, fallback to *_set
-    items = getattr(order, "items", None)
-    if items is not None:
-        items = items.all()
-    else:
-        items = getattr(order, "order_items", None)
-        if items is not None:
-            items = items.all()
-        else:
-            items = order.orderitem_set.all()  # fallback
-
-    payments = getattr(order, "payments", None)
-    if payments is not None:
-        payments = payments.all()
-    else:
-        payments = getattr(order, "payment_list", None)
-        if payments is not None:
-            payments = payments.all()
-        else:
-            payments = order.payment_set.all()  # fallback
+    items = order.items.all()
+    payments = order.payments.all()
 
     return render(request, "orders/order_detail.html", {
         "order": order,
@@ -152,15 +214,11 @@ def create_pos_order(request):
     return render(request, "orders/create_pos_order.html")
 
 
-# orders/views.py (add these)
-
-
+# =====================================================
+# ORDER LIST
+# =====================================================
 @login_required
 def order_list(request):
-    """
-    Order History Page (List)
-    Supports search + status + source + due filter + pagination (20/page)
-    """
     qs = Order.objects.select_related("customer").order_by("-id")
 
     q = request.GET.get("q", "").strip()
@@ -181,26 +239,22 @@ def order_list(request):
     if source:
         qs = qs.filter(source=source)
 
-    # ✅ Due filter
     if due == "1":
         qs = qs.filter(due_total__gt=0)
     elif due == "0":
         qs = qs.filter(due_total__lte=0)
 
-    # ✅ Pagination: 20 per page
-    paginator = Paginator(qs, 10)  # ✅ FIXED HERE
+    paginator = Paginator(qs, 10)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
     context = {
         "page_obj": page_obj,
         "orders": page_obj.object_list,
-
         "q": q,
         "status": status,
         "source": source,
         "due": due,
-
         "status_choices": getattr(Order.Status, "choices", []),
         "source_choices": getattr(Order.Source, "choices", []),
         "due_choices": [
@@ -212,23 +266,21 @@ def order_list(request):
     return render(request, "orders/order_list.html", context)
 
 
+# =====================================================
+# UPDATE ORDER
+# =====================================================
 @login_required
 @transaction.atomic
 def order_update(request, pk):
-    """
-    Edit order + items + payments (formsets)
-    """
     order = get_object_or_404(Order, pk=pk)
 
     if request.method == "POST":
         form = OrderForm(request.POST, instance=order)
-
         items_formset = OrderItemFormSet(request.POST, instance=order)
         pay_formset = PaymentFormSet(request.POST, instance=order)
 
         if form.is_valid() and items_formset.is_valid() and pay_formset.is_valid():
             order = form.save()
-
             items_formset.save()
             pay_formset.save()
 
@@ -252,12 +304,12 @@ def order_update(request, pk):
     })
 
 
+# =====================================================
+# DELETE ORDER
+# =====================================================
 @login_required
 @transaction.atomic
 def order_delete(request, pk):
-    """
-    Delete confirmation + delete
-    """
     order = get_object_or_404(Order, pk=pk)
 
     if request.method == "POST":
