@@ -141,9 +141,12 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-POS_PRINTER_ENABLED = False
+POS_PRINTER_ENABLED = True
 
 
+
+# Must match exactly your Windows printer name
+WINDOWS_POS_PRINTER_NAME = "POSPrinter POS80"
 # settings.py
 POS_PRINTER = {
     "TYPE": "LAN",          # "LAN" or "USB"

@@ -79,11 +79,20 @@
       </div>
 
       <a href="{% url 'catalog:product_list' %}"
-         class="sb-item {% if request.resolver_match.url_name == 'product_list' %}sb-active{% endif %}">
+         class="sb-item {% if request.resolver_match.app_name == 'catalog' and request.resolver_match.url_name == 'product_list' %}sb-active{% endif %}">
         <span class="sb-icon">
           <i class="fa-solid fa-boxes-stacked text-sky-300"></i>
         </span>
         <span class="text-sm font-semibold">Manage Products</span>
+      </a>
+
+      <!-- ✅ TAXONOMY / CATEGORY -->
+      <a href="{% url 'catalog:category_list' %}"
+         class="sb-item {% if request.resolver_match.app_name == 'catalog' and request.resolver_match.url_name == 'category_list' %}sb-active{% endif %}">
+        <span class="sb-icon">
+          <i class="fa-solid fa-tags text-cyan-300"></i>
+        </span>
+        <span class="text-sm font-semibold">Categories</span>
       </a>
     </div>
 

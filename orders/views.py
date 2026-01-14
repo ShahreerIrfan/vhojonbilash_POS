@@ -16,7 +16,7 @@ from .forms import CustomerCreateOrSelectForm, OrderForm, OrderItemFormSet, Paym
 from .models import Order
 from .utils import generate_order_no
 
-# ✅ NEW: printer helpers
+# ✅ Printer helpers (USB-Windows printing if you replaced orders/pos_printer.py)
 from .pos_printer import print_chef_kot, print_customer_receipt
 
 
@@ -60,7 +60,7 @@ def product_search(request):
 
 
 # =====================================================
-# CREATE ORDER
+# ✅ CREATE ORDER
 # =====================================================
 @login_required
 @transaction.atomic
@@ -103,7 +103,7 @@ def order_create(request):
 
             order.recalc_totals()
 
-            # ✅ CHANGE: redirect to print options page
+            # ✅ redirect to print options page
             if is_ajax(request):
                 return JsonResponse({
                     "ok": True,
@@ -152,7 +152,7 @@ def order_create(request):
 
 
 # =====================================================
-# ✅ NEW: PRINT OPTIONS PAGE
+# ✅ PRINT OPTIONS PAGE
 # =====================================================
 @login_required
 def order_print_options(request, pk):
@@ -164,33 +164,42 @@ def order_print_options(request, pk):
 
 
 # =====================================================
-# ✅ NEW: PRINT CHEF KOT
+# ✅ PRINT CHEF KOT (AJAX)
 # =====================================================
 @login_required
 def order_print_chef(request, pk):
     order = get_object_or_404(Order, pk=pk)
-    try:
-        print_chef_kot(order)
-        return JsonResponse({"ok": True})
-    except Exception as e:
-        return JsonResponse({"ok": False, "error": str(e)}, status=500)
+
+    ok, msg = print_chef_kot(order)
+
+    # 🔥 force show exact message
+    if not ok:
+        return JsonResponse({
+            "ok": False,
+            "error": msg
+        }, status=400)
+
+    return JsonResponse({"ok": True, "message": msg})
 
 
-# =====================================================
-# ✅ NEW: PRINT CUSTOMER RECEIPT
-# =====================================================
 @login_required
 def order_print_customer(request, pk):
     order = get_object_or_404(Order, pk=pk)
-    try:
-        print_customer_receipt(order)
-        return JsonResponse({"ok": True})
-    except Exception as e:
-        return JsonResponse({"ok": False, "error": str(e)}, status=500)
+
+    ok, msg = print_customer_receipt(order)
+
+    if not ok:
+        return JsonResponse({
+            "ok": False,
+            "error": msg
+        }, status=400)
+
+    return JsonResponse({"ok": True, "message": msg})
+
 
 
 # =====================================================
-# ORDER DETAIL
+# ✅ ORDER DETAIL
 # =====================================================
 @login_required
 def order_detail(request, pk):
@@ -215,7 +224,7 @@ def create_pos_order(request):
 
 
 # =====================================================
-# ORDER LIST
+# ✅ ORDER LIST
 # =====================================================
 @login_required
 def order_list(request):
@@ -267,7 +276,7 @@ def order_list(request):
 
 
 # =====================================================
-# UPDATE ORDER
+# ✅ UPDATE ORDER
 # =====================================================
 @login_required
 @transaction.atomic
@@ -305,7 +314,7 @@ def order_update(request, pk):
 
 
 # =====================================================
-# DELETE ORDER
+# ✅ DELETE ORDER
 # =====================================================
 @login_required
 @transaction.atomic
